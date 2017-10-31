@@ -1,0 +1,2 @@
+".html"|".com"|".es"|".net"|".pdf"
+[A-Za-z0-9._]{1,}\@["hotmail.com""hotmail.es""correo.ugr.es""gmail.com""yahoo.es"]	{printf("CORREO:""%s\n",yytext);}		
