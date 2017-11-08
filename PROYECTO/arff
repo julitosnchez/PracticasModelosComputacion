@@ -1,0 +1,10 @@
+%jxsajxsajajxsajjxsa
+%mxamsax[a-zA-Z][\ ]{1,}
+
+@RELATION ole
+@ATTRIBUTE numero NUMERIC
+@ATTRIBUTE sepallength  {ole-yes,ole-jefe,ole-jej}
+@ATTRIBUTE otroNumero NUMERIC
+
+@data
+2.3,?,3
