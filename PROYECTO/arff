@@ -5,6 +5,8 @@
 @ATTRIBUTE numero NUMERIC
 @ATTRIBUTE sepallength  {ole-yes,ole-jefe,ole-jej}
 @ATTRIBUTE otroNumero NUMERIC
+@ATTRIBUTE unaprueba STRING
 
 @data
-2.3,?,3
+1,ole-yes,4.2,'jejeasa- -as .'
+1,ole-jej,4,'a ajaajaj '

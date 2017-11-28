@@ -19,6 +19,7 @@ char  nombre_relacion[MAX];
 AtributosNominales atributos_nominales[MAX];
 char tipo_atributo[MAX];
 int iterador_atributos;
+char correspondencia[MAX][MAX]; //TIPO ATRIBUTO - NOMBRE TIPO ATRIBUTO
 
 
 int linea;
@@ -27,6 +28,7 @@ void comienzaLectura();
 void relacion(char * nombreRelacion);
 void atributo(char * nuevoAtributo);
 void compruebaSiToca(char  d);
+char * corresponde(char tipo,int i);
 
 /*
 	FECHAS FORMATO---¿TODAS LAS COMBINACIONES SON POSIBLES? SIEMPRE HEMOS DE INDICAR yyyy MM dd HH mm ss?
@@ -35,16 +37,17 @@ void compruebaSiToca(char  d);
 %}
 
 Comentario	"%"(.+)
+Caracter	.
 SaltoLinea	\n
 Relacion	"@RELATION"|"@relation"
 Atributo	"@ATTRIBUTE"|"@attribute"
-String	[a-zA-Z]+|\'([a-zA-Z][\ ]*)+\'
+Espacio	[\ ]+
+String	\'({Caracter}+{Espacio}?)+\'|[a-zA-Z]+
 Digito	[0-9]
 Numero	{Digito}+|{Digito}+\.{Digito}+
-Espacio	[\ ]+
 Nominal	[a-zA-Z]+
-NominalEspecificacion	({Nominal}\-{String}\,?)+
-TipoDato	"NUMERIC"|"numeric"|"string"|"STRING"|"DATE"|"date"|\{({NominalEspecificacion})\}	  
+NominalEspecificacion	({Nominal}\-{String}\,?)
+TipoDato	"NUMERIC"|"numeric"|"string"|"STRING"|"DATE"|"date"|\{({NominalEspecificacion}+)\}
 Datos	"@data"|"@DATA"
 
 %%
@@ -56,7 +59,7 @@ Datos	"@data"|"@DATA"
 {Datos}	{comienzaLectura();}
 {Numero}\,?	{compruebaSiToca('n');}
 {String}\,?	{compruebaSiToca('s');}
-{NominalEspecificacion}\,?	{compruebaSiToca('{');}
+{NominalEspecificacion}\,?	{compruebaSiToca('{');compruebaNominalCorrecto(yytext);}
 \?,?	{iteradorDatos++;}
 .	{}
 %%
@@ -167,6 +170,7 @@ void atributo(char * nuevoAtributo)
 			if(nuevoAtributo[i] == ',') i++;
 			an.nominalEspecificacion[an.nAtributos][j] = '\0';
 			an.nAtributos++;
+
 		}
 	}
 	atributos_nominales[iterador_atributos] = an;
@@ -181,18 +185,53 @@ void compruebaSiToca(char  d)
 		printf("Se ha recibido dato y no se ha declarado seccion @data en linea %i\n",linea);
 		exit(-1);
 	}
-
 	char dMayus = d-32;
 	if(d != tipo_atributo[iteradorDatos] && dMayus != tipo_atributo[iteradorDatos])
 	{
-		printf("Error: Se esperaba %c y se ha recibido %c en linea %i\n",tipo_atributo[iteradorDatos],d,linea);
+		printf("Error: Se esperaba %s y se ha recibido %s en linea %i\n",corresponde(tipo_atributo[iteradorDatos],0),corresponde(d,1),linea);
 		exit(-1);
 	}
 	else
 		iteradorDatos++;
 }
 
+void compruebaNominalCorrecto(char * cadena)
+{
+	unsigned c = 0;
+	AtributosNominales an;an.nAtributos = 0;
 
+	//QUITAMOS LA , final para poder comprobar bien
+	if(cadena[strlen(cadena)-1] == ',')
+		cadena[strlen(cadena)-1] = '\0';
 
+	for(int i=0;i<MAX && c == 0;i++)
+	{
+		an = atributos_nominales[i];
+		for(int j=0;j<an.nAtributos && c == 0;j++)
+			if(!strcmp(an.nominalEspecificacion[j],cadena))
+				c++;
+	}
 
+	if(c == 0)
+	{
+		printf("Error: Se ha recibido el atributo nominal %s NO reconocible en linea %i\n",cadena,linea);
+		exit(-1);
+	}
+}
+
+char * corresponde(char tipo,int i)
+{
+	if(tipo == '{')
+		strcpy(correspondencia[i],"NOMINAL");
+	else if (tipo == 'n' || tipo == 'N')
+	{
+		strcpy(correspondencia[i],"NUMERIC");
+	}
+	else if (tipo == 's' || tipo == 'S')
+	{
+		strcpy(correspondencia[i],"STRING");
+	}
+
+	return correspondencia[i];
+}
 
