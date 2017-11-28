@@ -23,6 +23,8 @@ char correspondencia[MAX][MAX]; //TIPO ATRIBUTO - NOMBRE TIPO ATRIBUTO
 
 
 int linea;
+int formatoFecha[MAX];
+int iteradorFecha;
 
 void comienzaLectura();
 void relacion(char * nombreRelacion);
@@ -31,12 +33,18 @@ void compruebaSiToca(char  d);
 char * corresponde(char tipo,int i);
 
 /*
-	FECHAS FORMATO---¿TODAS LAS COMBINACIONES SON POSIBLES? SIEMPRE HEMOS DE INDICAR yyyy MM dd HH mm ss?
+	FALTAN FECHAS
 */
 
 %}
 
 Comentario	"%"(.+)
+
+FormatoFecha	"yyyy-MM-dd HH:mm:ss"|"dd-MM-yyyy HH:mm:ss"
+Anio	\2\0\0[0-9]|\2\0\1[0-7]|[01][0-9][0-9][0-9]
+Mes	\0[1-9]|\1[12]
+Dia	[012][0-9]|\3[01]
+
 Caracter	.
 SaltoLinea	\n
 Relacion	"@RELATION"|"@relation"
@@ -53,9 +61,9 @@ Datos	"@data"|"@DATA"
 %%
 	/*----- Sección de Reglas ----------------*/
 {Comentario}
-{SaltoLinea}	{linea++;iteradorDatos=0;}
+{SaltoLinea}	{linea++;iteradorDatos=0;iteradorFecha=0;}
 {Relacion}{Espacio}{String}	{relacion(yytext);}
-{Atributo}{Espacio}{String}{Espacio}{TipoDato}	{atributo(yytext);}
+{Atributo}{Espacio}{String}{Espacio}{TipoDato}({Espacio}{FormatoFecha})?	{atributo(yytext);}
 {Datos}	{comienzaLectura();}
 {Numero}\,?	{compruebaSiToca('n');}
 {String}\,?	{compruebaSiToca('s');}
@@ -80,7 +88,7 @@ int main(int argc,char *argv[])
 	else yyin = stdin;
 
 	linea = 1;
-	leyendoDatos = iterador_atributos = iteradorDatos = 0;
+	leyendoDatos = iterador_atributos = iteradorDatos = iteradorFecha = 0;
 
 	yylex();
 	return 0;
@@ -133,6 +141,16 @@ void atributo(char * nuevoAtributo)
 	//Tipo Atributo
 	tipo_atributo[iterador_atributos] = nuevoAtributo[i];
 
+	if(nuevoAtributo[i] == 'd' || nuevoAtributo[i] == 'D') //DATE --- VEMOS QUE FORMATO SE HA USADO 1 o 2
+	{
+		while(nuevoAtributo[i] != '"') i++;
+		i++;
+		if(nuevoAtributo[i] == 'y')
+			formatoFecha[iteradorFecha++] = 1;
+		else 
+			formatoFecha[iteradorFecha++] = 0;
+		
+	}
 	//comprobamos que todos los nominales sean iguales
 	char nominal[MAX];
 	nominal[0] = '\0';
@@ -172,8 +190,9 @@ void atributo(char * nuevoAtributo)
 			an.nAtributos++;
 
 		}
-	}
 	atributos_nominales[iterador_atributos] = an;
+	}
+
 
 	iterador_atributos++;
 }
