@@ -23,8 +23,6 @@ char correspondencia[MAX][MAX]; //TIPO ATRIBUTO - NOMBRE TIPO ATRIBUTO
 
 
 int linea;
-int formatoFecha[MAX];
-int iteradorFecha;
 
 void comienzaLectura();
 void relacion(char * nombreRelacion);
@@ -40,10 +38,15 @@ char * corresponde(char tipo,int i);
 
 Comentario	"%"(.+)
 
-FormatoFecha	"yyyy-MM-dd HH:mm:ss"|"dd-MM-yyyy HH:mm:ss"
-Anio	\2\0\0[0-9]|\2\0\1[0-7]|[01][0-9][0-9][0-9]
-Mes	\0[1-9]|\1[12]
-Dia	[012][0-9]|\3[01]
+FormatoFecha	\"yyyy\-MM\-dd\ HH\:mm\:ss\"|"dd-MM-yyyy\ HH:mm:ss"
+Anio	200[0-9]|201[0-7]|[01][0-9][0-9][0-9]
+Mes	0[1-9]|1[12]
+Dia	[012][0-9]|3[01]
+Hora	[01][0-9]|2[0-3]
+Min	[0-5][0-9]
+Seg	[0-5][0-9]
+Fecha1	{Anio}\-{Mes}\-{Dia}\ {Hora}\:{Min}\:{Seg}
+Fecha2	{Dia}\-{Mes}\-{Anio}\ {Hora}\:{Min}\:{Seg}
 
 Caracter	.
 SaltoLinea	\n
@@ -55,18 +58,20 @@ Digito	[0-9]
 Numero	{Digito}+|{Digito}+\.{Digito}+
 Nominal	[a-zA-Z]+
 NominalEspecificacion	({Nominal}\-{String}\,?)
-TipoDato	"NUMERIC"|"numeric"|"string"|"STRING"|"DATE"|"date"|\{({NominalEspecificacion}+)\}
+TipoDato	"NUMERIC"|"numeric"|"string"|"STRING"|"DATE"{Espacio}{FormatoFecha}|"date"|\{({NominalEspecificacion}+)\}
 Datos	"@data"|"@DATA"
 
 %%
 	/*----- Sección de Reglas ----------------*/
 {Comentario}
-{SaltoLinea}	{linea++;iteradorDatos=0;iteradorFecha=0;}
+{SaltoLinea}	{linea++;iteradorDatos=0;}
 {Relacion}{Espacio}{String}	{relacion(yytext);}
-{Atributo}{Espacio}{String}{Espacio}{TipoDato}({Espacio}{FormatoFecha})?	{atributo(yytext);}
+{Atributo}{Espacio}{String}{Espacio}{TipoDato}	{atributo(yytext);}
 {Datos}	{comienzaLectura();}
 {Numero}\,?	{compruebaSiToca('n');}
 {String}\,?	{compruebaSiToca('s');}
+{Fecha1}\,?	{compruebaSiToca('1');}
+{Fecha2}\,?	{compruebaSiToca('2');}
 {NominalEspecificacion}\,?	{compruebaSiToca('{');compruebaNominalCorrecto(yytext);}
 \?,?	{iteradorDatos++;}
 .	{}
@@ -88,7 +93,7 @@ int main(int argc,char *argv[])
 	else yyin = stdin;
 
 	linea = 1;
-	leyendoDatos = iterador_atributos = iteradorDatos = iteradorFecha = 0;
+	leyendoDatos = iterador_atributos = iteradorDatos = 0;
 
 	yylex();
 	return 0;
@@ -129,6 +134,11 @@ void relacion(char * nombreRelacion)
 
 void atributo(char * nuevoAtributo)
 {
+	if(strlen(nombre_relacion) == 0) //ERROR- DECLARACION DE @ATTRIBUTE SIN @RELATION
+	{
+		printf("\nError: Declaracion de seccion @ATTRIBUTE sin haber declarado sección @RELATION en linea %i\n",linea);
+		exit(-1);
+	}
 	//printf("NUEVO ATRIBUTO: %s\n",nuevoAtributo);
 	//Nos quitamos @relation
 	int i = 0;
@@ -146,9 +156,9 @@ void atributo(char * nuevoAtributo)
 		while(nuevoAtributo[i] != '"') i++;
 		i++;
 		if(nuevoAtributo[i] == 'y')
-			formatoFecha[iteradorFecha++] = 1;
+			tipo_atributo[iterador_atributos] = '1';
 		else 
-			formatoFecha[iteradorFecha++] = 0;
+			tipo_atributo[iterador_atributos] = '2';
 		
 	}
 	//comprobamos que todos los nominales sean iguales
@@ -174,7 +184,10 @@ void atributo(char * nuevoAtributo)
 
 			//COmprobamos que todos tienen mismo nominal
 			if(strlen(nominal) == 0)
+			{
 				strcpy(nominal,aux_nominal);
+				if(strcmp(nominal,nombre_relacion)) { printf("\nError: El nombre de la relacion no corresponde con el atributo nominal en linea %i\n",linea); exit(-1); }
+			}
 			else if(strcmp(nominal,aux_nominal))
 				{
 					printf("Error: El valor nominal difiere en linea %i\n",linea);
@@ -201,7 +214,7 @@ void compruebaSiToca(char  d)
 {
 	if(leyendoDatos == 0)
 	{
-		printf("Se ha recibido dato y no se ha declarado seccion @data en linea %i\n",linea);
+		printf("Se ha recibido dato %c y no se ha declarado seccion @data en linea %i\n",d,linea);
 		exit(-1);
 	}
 	char dMayus = d-32;
@@ -250,6 +263,10 @@ char * corresponde(char tipo,int i)
 	{
 		strcpy(correspondencia[i],"STRING");
 	}
+	else if (tipo == '1')
+		strcpy(correspondencia[i],"FECHA(yyyy-MM-dd HH:mm:ss)");
+	else if (tipo == '2')
+		strcpy(correspondencia[i],"FECHA(dd-MM-yyyy HH:mm:ss)");
 
 	return correspondencia[i];
 }
