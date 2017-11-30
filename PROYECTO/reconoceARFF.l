@@ -220,7 +220,10 @@ void compruebaSiToca(char  d)
 	char dMayus = d-32;
 	if(d != tipo_atributo[iteradorDatos] && dMayus != tipo_atributo[iteradorDatos])
 	{
-		printf("Error: Se esperaba %s y se ha recibido %s en linea %i\n",corresponde(tipo_atributo[iteradorDatos],0),corresponde(d,1),linea);
+		if(tipo_atributo[iteradorDatos] != '\0')
+			printf("Error: Se esperaba %s y se ha recibido %s en linea %i\n",corresponde(tipo_atributo[iteradorDatos],0),corresponde(d,1),linea);
+		else
+			printf("Error: No se esperaba nada y se ha recibido %s en linea %i\n",corresponde(d,1),linea);
 		exit(-1);
 	}
 	else
