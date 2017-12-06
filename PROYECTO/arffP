@@ -1,0 +1,26 @@
+% 1. Title: Iris Plants Database
+% 
+% 2. Sources:
+%      (a) Creator: R.A. Fisher
+%      (b) Donor: Michael Marshall (MARSHALL%PLU@io.arc.nasa.gov)
+%      (c) Date: July, 1988
+% 
+@RELATION Iris
+
+@ATTRIBUTE sepallength  NUMERIC
+@ATTRIBUTE sepalwidth   STRING
+@ATTRIBUTE pruebafecha DATE "yyyy-MM-dd HH:mm:ss"
+@ATTRIBUTE petalwidth   NUMERIC
+@ATTRIBUTE nominal   {Iris-atributo1,Iris-atributo2,Iris-atributo3}
+
+@DATA
+2,?,2014-11-20 10:10:02,0.2,?
+4.9,'otro string',2000-11-20 09:12:02,0.2,Iris-atributo2
+3.2,ejemplo,2014-12-04 10:10:02,0.2,Iris-atributo1
+4.9,'Modelos de Computacion',2014-11-20 10:10:02,0.2,Iris-atributo3
+4.2,abc,2014-11-20 10:10:02,0.2,Iris-atributo1
+46.9,def,2014-11-20 10:10:02,0.2,Iris-atributo3
+2.24,'Hola mi nombre es Julio y esto es una prueba de String.',2014-11-20 10:10:02,0.2,Iris-atributo3
+4.9,'1,2,3 Un pasito para alante Maria',2014-11-20 10:10:02,12,Iris-atributo2
+21.2,si,2014-11-20 10:10:02,0.2,Iris-atributo3
+40.9,NO,2014-11-20 10:10:02,0.322,Iris-atributo2

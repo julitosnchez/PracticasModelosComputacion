@@ -29,6 +29,7 @@ void relacion(char * nombreRelacion);
 void atributo(char * nuevoAtributo);
 void compruebaSiToca(char  d);
 char * corresponde(char tipo,int i);
+void compruebaSiTodosLeidos(int leidos);
 
 /*
 	FALTAN FECHAS
@@ -37,6 +38,7 @@ char * corresponde(char tipo,int i);
 %}
 
 Comentario	"%"(.+)
+Espacio	[\ ]+
 
 FormatoFecha	\"yyyy\-MM\-dd\ HH\:mm\:ss\"|"dd-MM-yyyy\ HH:mm:ss"
 Anio	200[0-9]|201[0-7]|[01][0-9][0-9][0-9]
@@ -45,15 +47,14 @@ Dia	[012][0-9]|3[01]
 Hora	[01][0-9]|2[0-3]
 Min	[0-5][0-9]
 Seg	[0-5][0-9]
-Fecha1	{Anio}\-{Mes}\-{Dia}\ {Hora}\:{Min}\:{Seg}
-Fecha2	{Dia}\-{Mes}\-{Anio}\ {Hora}\:{Min}\:{Seg}
+Fecha1	{Anio}\-{Mes}\-{Dia}{Espacio}{Hora}\:{Min}\:{Seg}
+Fecha2	{Dia}\-{Mes}\-{Anio}{Espacio}{Hora}\:{Min}\:{Seg}
 
 Caracter	.
 SaltoLinea	\n
 Relacion	"@RELATION"|"@relation"
 Atributo	"@ATTRIBUTE"|"@attribute"
-Espacio	[\ ]+
-String	\'({Caracter}+{Espacio}?)+\'|[a-zA-Z]+
+String	\'({Caracter}+{Espacio}?)+\'|([a-zA-Z][0-9]?)+
 Digito	[0-9]
 Numero	{Digito}+|{Digito}+\.{Digito}+
 Nominal	[a-zA-Z]+
@@ -64,10 +65,10 @@ Datos	"@data"|"@DATA"
 %%
 	/*----- Sección de Reglas ----------------*/
 {Comentario}
-{SaltoLinea}	{linea++;iteradorDatos=0;}
+{SaltoLinea}	{compruebaSiTodosLeidos(iteradorDatos);linea++;iteradorDatos=0;}
 {Relacion}{Espacio}{String}	{relacion(yytext);}
 {Atributo}{Espacio}{String}{Espacio}{TipoDato}	{atributo(yytext);}
-{Datos}	{comienzaLectura();}
+{Datos}	{comienzaLectura();iteradorDatos = strlen(tipo_atributo);}
 {Numero}\,?	{compruebaSiToca('n');}
 {String}\,?	{compruebaSiToca('s');}
 {Fecha1}\,?	{compruebaSiToca('1');}
@@ -96,6 +97,9 @@ int main(int argc,char *argv[])
 	leyendoDatos = iterador_atributos = iteradorDatos = 0;
 
 	yylex();
+	printf("----------------------------------------------------------");
+	printf("\n----El fichero dado como entrada contiene formato ARFF----\n");
+	printf("----------------------------------------------------------");
 	return 0;
 }
 
@@ -105,7 +109,7 @@ void comienzaLectura()
 		leyendoDatos = 1;
 	else
 	{
-		printf("\n\nError en linea %i, seccion @data ya se había leído\n",linea);
+		printf("\nError en linea %i, seccion @DATA ya se había leído\n",linea);
 		exit(-1);
 	}
 }
@@ -161,6 +165,7 @@ void atributo(char * nuevoAtributo)
 			tipo_atributo[iterador_atributos] = '2';
 		
 	}
+	tipo_atributo[iterador_atributos+1] = '\0';
 	//comprobamos que todos los nominales sean iguales
 	char nominal[MAX];
 	nominal[0] = '\0';
@@ -190,7 +195,7 @@ void atributo(char * nuevoAtributo)
 			}
 			else if(strcmp(nominal,aux_nominal))
 				{
-					printf("Error: El valor nominal difiere en linea %i\n",linea);
+					printf("\nError: El nombre de la relacion no corresponde con el atributo nominal en linea %i\n",linea);
 					exit(-1);
 				}
 
@@ -214,10 +219,11 @@ void compruebaSiToca(char  d)
 {
 	if(leyendoDatos == 0)
 	{
-		printf("Se ha recibido dato %c y no se ha declarado seccion @data en linea %i\n",d,linea);
+		printf("Se ha recibido dato %s y no se ha declarado seccion @data en linea %i\n",corresponde(d,0),linea);
 		exit(-1);
 	}
 	char dMayus = d-32;
+
 	if(d != tipo_atributo[iteradorDatos] && dMayus != tipo_atributo[iteradorDatos])
 	{
 		if(tipo_atributo[iteradorDatos] != '\0')
@@ -272,5 +278,16 @@ char * corresponde(char tipo,int i)
 		strcpy(correspondencia[i],"FECHA(dd-MM-yyyy HH:mm:ss)");
 
 	return correspondencia[i];
+}
+
+void compruebaSiTodosLeidos(int leidos)
+{
+	if(leyendoDatos){
+		if(leidos != strlen(tipo_atributo))
+		{
+			printf("Error: No se han recibido todos los datos esperados en la linea %i\n",linea);
+			exit(-1);
+		}
+	}
 }
 
